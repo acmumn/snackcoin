@@ -4,8 +4,9 @@ extern crate futures;
 extern crate iron;
 extern crate tar;
 
+use std::collections::HashMap;
 use std::fs::File;
-use std::io::{Cursor, Read, Result as IoResult};
+use std::io::{Cursor, Read, Result};
 use std::path::Path;
 use std::sync::Mutex;
 
@@ -13,42 +14,44 @@ use iron::{Handler, IronResult, Request, Response};
 use iron::status::NotImplemented;
 use tar::Archive;
 
+enum Fs {
+    Dir(String, Vec<Fs>),
+    File(String, Vec<u8>),
+}
+
 /// A handler based on a tar file.
-pub struct TarHandler<R: 'static + Read + Send = File> {
-    archive: Mutex<Archive<R>>,
+pub struct TarHandler {
+    files: Mutex<Vec<Fs>>,
 }
 
-impl TarHandler<File> {
-    /// Opens a file and creates a TarHandler for it.
-    pub fn open_file<P: AsRef<Path>>(path: P) -> IoResult<TarHandler<File>> {
-        File::open(path).map(TarHandler::new)
+impl TarHandler {
+    /// Creates a handler from a tar archive.
+    fn from_archive<R: Read>(mut archive: Archive<R>) -> Result<TarHandler> {
+        let files = archive.entries()?.collect::<Result<Vec<_>>>()?;
+        unimplemented!()
     }
-}
 
-impl TarHandler<Cursor<Vec<u8>>> {
     /// Creates a handler from some bytes.
-    pub fn from_bytes(bytes: Vec<u8>) -> TarHandler<Cursor<Vec<u8>>> {
+    pub fn from_bytes(bytes: Vec<u8>) -> Result<TarHandler> {
         TarHandler::new(Cursor::new(bytes))
     }
-}
 
-impl<R: 'static + Read + Send> TarHandler<R> {
     /// Creates a new TarHandler from a Read, which is a tar file.
-    pub fn new(read: R) -> TarHandler<R> {
-        TarHandler::from(Archive::new(read))
+    pub fn new<R: Read>(read: R) -> Result<TarHandler> {
+        TarHandler::from_archive(Archive::new(read))
+    }
+
+    /// Opens a file and creates a TarHandler for it.
+    pub fn open_file<P: AsRef<Path>>(path: P) -> Result<TarHandler> {
+        File::open(path).and_then(TarHandler::new)
     }
 }
 
-impl<R: 'static + Read + Send> From<Archive<R>> for TarHandler<R> {
-    fn from(archive: Archive<R>) -> TarHandler<R> {
-        let archive = Mutex::new(archive);
-        TarHandler { archive }
-    }
-}
-
-impl<R: 'static + Read + Send> Handler for TarHandler<R> {
+impl Handler for TarHandler {
     fn handle(&self, req: &mut Request) -> IronResult<Response> {
-        println!("{:?}", req);
-        Ok(Response::with((NotImplemented, "TODO")))
+        let path = req.url.path();
+        let body = format!("{:?}", path);
+        println!("{}", body);
+        Ok(Response::with((NotImplemented, body)))
     }
 }
