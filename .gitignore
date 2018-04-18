@@ -2,6 +2,8 @@
 !.gitignore
 !.travis.yml
 
+*.log
+
 dist/
 node_modules/
 target/

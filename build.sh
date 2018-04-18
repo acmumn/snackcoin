@@ -9,6 +9,7 @@ cd $(dirname $BASH_SOURCE)
 mkdir -p dist
 
 cd client
+yarn
 yarn build
 tar cf ../dist/site.tar dist
 cd ..
