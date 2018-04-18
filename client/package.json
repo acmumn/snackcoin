@@ -1,0 +1,14 @@
+{
+  "author": "Nathan Ringo <remexre@gmail.com>",
+  "license": "Apache-2.0 OR MIT",
+  "main": "src/index.js",
+  "name": "snackcoin-client",
+  "scripts": {
+    "build": "parcel build src/index.html"
+  },
+  "version": "1.0.0",
+  "devDependencies": {
+    "parcel-bundler": "^1.7.1",
+    "parcel-plugin-svelte": "^1.0.0"
+  }
+}

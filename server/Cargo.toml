@@ -1,0 +1,16 @@
+[package]
+name = "snackcoin"
+version = "0.1.0"
+authors = ["Nathan Ringo <remexre@gmail.com>"]
+
+[dependencies]
+failure = "0.1.1"
+futures = "0.2.0"
+iron = "0.6.0"
+log = "0.4.1"
+logger = "0.4.0"
+mount = "0.4.0"
+router = "0.6.0"
+stderrlog = { git = "https://github.com/cardoe/stderrlog-rs.git" }
+structopt = "0.2.7"
+tokio-core = "0.1.17"

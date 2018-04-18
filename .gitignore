@@ -1,0 +1,7 @@
+.*
+!.gitignore
+!.travis.yml
+
+dist/
+node_modules/
+target/
