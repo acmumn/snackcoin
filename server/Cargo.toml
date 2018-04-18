@@ -13,4 +13,5 @@ mount = "0.4.0"
 router = "0.6.0"
 stderrlog = { git = "https://github.com/cardoe/stderrlog-rs.git" }
 structopt = "0.2.7"
+tarhandler = { path = "../crates/tarhandler" }
 tokio-core = "0.1.17"

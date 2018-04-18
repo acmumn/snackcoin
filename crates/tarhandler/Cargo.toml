@@ -1,0 +1,9 @@
+[package]
+name = "tarhandler"
+version = "0.1.0"
+authors = ["Nathan Ringo <remexre@gmail.com>"]
+
+[dependencies]
+futures = "0.2.0"
+iron = "0.6.0"
+tar = "0.4.15"
