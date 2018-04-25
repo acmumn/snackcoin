@@ -7,7 +7,7 @@ pub fn make_handler() -> Router {
     }
 }
 
-fn the_source_code_is_self_documenting(req: &mut Request) -> IronResult<Response> {
+fn the_source_code_is_self_documenting(_req: &mut Request) -> IronResult<Response> {
     use iron::headers::Location;
 
     const GITHUB_LINK: &str = "https://github.com/acmumn/snackcoin/tree/master/server/src/routes/";

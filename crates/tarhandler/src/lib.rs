@@ -32,7 +32,7 @@ impl TarHandler {
     }
 
     /// Creates a handler from some bytes.
-    pub fn from_bytes(bytes: Vec<u8>) -> Result<TarHandler> {
+    pub fn from_bytes(bytes: &[u8]) -> Result<TarHandler> {
         TarHandler::new(Cursor::new(bytes))
     }
 
