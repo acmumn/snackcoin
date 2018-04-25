@@ -11,7 +11,7 @@ mkdir -p dist
 cd client
 yarn
 yarn build
-tar cf ../dist/site.tar dist
+tar -cC dist -f ../dist/site.tar .
 cd ..
 
 cd server

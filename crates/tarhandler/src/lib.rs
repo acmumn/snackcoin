@@ -4,31 +4,71 @@ extern crate futures;
 extern crate iron;
 extern crate tar;
 
-use std::collections::HashMap;
+mod fs;
+
 use std::fs::File;
-use std::io::{Cursor, Read, Result};
-use std::path::Path;
-use std::sync::Mutex;
+use std::io::{Cursor, Error, ErrorKind, Read, Result};
+use std::path::{Component, Path};
+use std::sync::RwLock;
 
-use iron::{Handler, IronResult, Request, Response};
-use iron::status::NotImplemented;
-use tar::Archive;
+use iron::{status, Handler, IronResult, Request, Response};
+use tar::{Archive, EntryType};
 
-enum Fs {
-    Dir(String, Vec<Fs>),
-    File(String, Vec<u8>),
-}
+use fs::Fs;
 
 /// A handler based on a tar file.
 pub struct TarHandler {
-    files: Mutex<Vec<Fs>>,
+    root: RwLock<Fs>,
 }
 
 impl TarHandler {
     /// Creates a handler from a tar archive.
     fn from_archive<R: Read>(mut archive: Archive<R>) -> Result<TarHandler> {
-        let files = archive.entries()?.collect::<Result<Vec<_>>>()?;
-        unimplemented!()
+        let entries = archive.entries()?.collect::<Result<Vec<_>>>()?;
+
+        let mut root = Fs::new();
+        for mut entry in entries {
+            if entry.header().entry_type() != EntryType::Regular {
+                continue;
+            }
+
+            let path = {
+                let path = entry.header().path()?;
+                path.components()
+                    .filter_map(|c| {
+                        match c {
+                            Component::Normal(c) => match c.to_str() {
+                                Some(c) => Some(Ok(c.to_string())),
+                                None => Some(Err(Error::new(
+                                    ErrorKind::Other,
+                                    format!(
+                                        "Component {:?} of path {} is not valid Unicode",
+                                        c,
+                                        path.display()),
+                                ))),
+                            },
+                            Component::CurDir => None,
+                            _ => Some(Err(Error::new(
+                                ErrorKind::Other,
+                                format!(
+                                    "Invalid component {:?} of path {}",
+                                    c,
+                                    path.display()),
+                                ))),
+                        }
+                    })
+                    .collect::<Result<Vec<_>>>()?
+            };
+
+            let mut body = vec![];
+            entry.read_to_end(&mut body)?;
+
+            root.add_file(path, body)?;
+        }
+
+        Ok(TarHandler {
+            root: RwLock::new(root),
+        })
     }
 
     /// Creates a handler from some bytes.
@@ -49,9 +89,12 @@ impl TarHandler {
 
 impl Handler for TarHandler {
     fn handle(&self, req: &mut Request) -> IronResult<Response> {
+        let root = self.root.read().unwrap();
         let path = req.url.path();
-        let body = format!("{:?}", path);
-        println!("{}", body);
-        Ok(Response::with((NotImplemented, body)))
+        if let Some(file) = root.get_file(&path) {
+            Ok(Response::with((status::NotImplemented, file.to_owned())))
+        } else {
+            Ok(Response::with(status::NotFound))
+        }
     }
 }
