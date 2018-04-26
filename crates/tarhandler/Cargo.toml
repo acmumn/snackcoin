@@ -6,4 +6,5 @@ authors = ["Nathan Ringo <remexre@gmail.com>"]
 [dependencies]
 futures = "0.2.0"
 iron = "0.6.0"
+mime_guess = "1.8.4"
 tar = "0.4.15"

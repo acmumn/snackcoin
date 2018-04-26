@@ -2,6 +2,7 @@
 
 extern crate futures;
 extern crate iron;
+extern crate mime_guess;
 extern crate tar;
 
 mod fs;
@@ -12,6 +13,7 @@ use std::path::{Component, Path};
 use std::sync::RwLock;
 
 use iron::{status, Handler, IronResult, Request, Response};
+use mime_guess::get_mime_type;
 use tar::{Archive, EntryType};
 
 use fs::Fs;
@@ -24,10 +26,9 @@ pub struct TarHandler {
 impl TarHandler {
     /// Creates a handler from a tar archive.
     fn from_archive<R: Read>(mut archive: Archive<R>) -> Result<TarHandler> {
-        let entries = archive.entries()?.collect::<Result<Vec<_>>>()?;
-
         let mut root = Fs::new();
-        for mut entry in entries {
+        for entry in archive.entries()? {
+            let mut entry = entry?;
             if entry.header().entry_type() != EntryType::Regular {
                 continue;
             }
@@ -92,7 +93,13 @@ impl Handler for TarHandler {
         let root = self.root.read().unwrap();
         let path = req.url.path();
         if let Some(file) = root.get_file(&path) {
-            Ok(Response::with((status::NotImplemented, file.to_owned())))
+            let mime = path.last()
+                .map(|f| -> &Path { f.as_ref() })
+                .and_then(|p| p.extension())
+                .and_then(|s| s.to_str())
+                .map(get_mime_type)
+                .unwrap_or_else(|| "text/html".parse().unwrap());
+            Ok(Response::with((status::Ok, mime, file)))
         } else {
             Ok(Response::with(status::NotFound))
         }

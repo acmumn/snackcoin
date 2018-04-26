@@ -16,5 +16,5 @@ cd ..
 
 cd server
 cargo build --release
-install target/release/snackcoin ../dist/snackcoin
 cd ..
+install target/release/snackcoin dist/snackcoin

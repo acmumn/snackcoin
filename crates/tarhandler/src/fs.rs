@@ -69,7 +69,6 @@ impl Fs {
     /// Gets a file from the filesystem, if it exists.
     pub fn get_file<'a>(&'a self, path: &[&str]) -> Option<&'a [u8]> {
         fn helper<'a>(dirent: &'a Dirent, path: &[&str]) -> Option<&'a [u8]> {
-            println!("{:?}", path);
             if let Some((hd, tl)) = path.split_first() {
                 dirent
                     .as_dir()
@@ -89,10 +88,13 @@ impl Fs {
         // our helper only works with dirents, but we have a directory table
         // directly in the Fs.
         if let Some((hd, tl)) = path.split_first() {
-            self.entries.get(*hd).and_then(|file| helper(file, tl))
+            if path == [""] {
+                self.get_file(&["index.html"])
+            } else {
+                self.entries.get(*hd).and_then(|file| helper(file, tl))
+            }
         } else {
-            static PATH: &[&str] = &["index.html"];
-            self.get_file(PATH)
+            self.get_file(&["index.html"])
         }
     }
 
